@@ -84,6 +84,8 @@ Before production, also test with separate Admin, Sales and Developer users agai
 
 ## Deployment
 
+For Vercel, import the directory containing `package.json` and `vercel.json` as the project root. The checked-in configuration selects the Next.js framework, runs `npm run build`, and uses its default output directory. In Project Settings → Build and Deployment, select **Next.js** and disable any Output Directory override set to `public`. Commit and push the configuration, then redeploy. Do not create an empty `public` directory to resolve `STATIC_BUILD_NO_OUT_DIR`; this application needs Next.js server routes.
+
 Deploy as a standard Next.js Node application on a provider that supports server routes, private environment variables, HTTPS and scheduled HTTP calls. Run `npm run build` then `npm start`. Use your production URL in Auth redirects and Meta webhooks. Demo mode is suitable for local evaluation; connect Supabase for shared durable data. This project has not been published or connected to a business account automatically.
  
 ## Practical limits
