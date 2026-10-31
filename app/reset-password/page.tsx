@@ -1,0 +1,4 @@
+"use client";
+import {useState,FormEvent} from "react";
+import {browserDb,configured} from "@/lib/supabase";
+export default function Reset(){const [message,setMessage]=useState("");async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!configured){setMessage("Configure Supabase first.");return}const password=String(new FormData(e.currentTarget).get("password"));const {error}=await browserDb().auth.updateUser({password});setMessage(error?error.message:"Password updated. You can return to your workspace.")}return <div className="splash"><form className="login-form" onSubmit={submit}><span className="eyebrow">PATKAR INFOTECH</span><h2>Choose a new password</h2><label>New password<input type="password" name="password" minLength={12} required autoComplete="new-password"/></label><button className="btn primary">Update password</button>{message&&<p>{message}</p>}<a href="/" className="text-button">Back to workspace</a></form></div>}

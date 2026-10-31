@@ -1,0 +1,4 @@
+import {auth,serviceDb,apiError} from "@/lib/supabase";
+import {sendMessage} from "@/lib/messaging";
+export async function GET(req:Request){try{const {db}=await auth(req);const id=new URL(req.url).searchParams.get("conversation");const {data,error}=await db.from("messages").select("*").eq("conversation_id",id).order("created_at");if(error)throw error;return Response.json(data)}catch(e){return apiError(e)}}
+export async function POST(req:Request){try{const {db,profile}=await auth(req);if(!["Admin","Sales"].includes(profile.role))throw new Error("Insufficient permission");const input=await req.json();if(!/^[a-zA-Z0-9-]{16,100}$/.test(input.key))throw new Error("Invalid idempotency key");const {data:c}=await db.from("records").select("*").eq("id",input.conversation_id).eq("kind","conversations").single();if(!c)throw new Error("Conversation permission denied");return Response.json(await sendMessage(serviceDb(),c,input,input.key))}catch(e){return apiError(e)}}
