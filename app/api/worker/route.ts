@@ -4,6 +4,7 @@ import {shouldCancel,quietNow} from "@/lib/domain";
 import {sendMessage} from "@/lib/messaging";
 export const maxDuration=60;
 export async function POST(req:Request){const supplied=Buffer.from(req.headers.get("authorization")||""),expected=Buffer.from(`Bearer ${process.env.WORKER_SECRET||""}`);if(!process.env.WORKER_SECRET||supplied.length!==expected.length||!timingSafeEqual(supplied,expected))return new Response("Unauthorized",{status:401});
+ if(process.env.WHATSAPP_AUTOMATION_ENABLED!=="true")return Response.json({enabled:false,processed:0});
  const db=serviceDb();
  // A crashed send cannot safely be replayed. Flag stale claims for human reconciliation.
  await db.from("jobs").update({status:"review",error:"Worker lease expired. Reconcile message before retry."}).eq("status","processing").lt("locked_at",new Date(Date.now()-300000).toISOString());

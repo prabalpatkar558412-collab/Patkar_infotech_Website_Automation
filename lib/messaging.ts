@@ -1,7 +1,7 @@
 import {createHmac,timingSafeEqual} from "node:crypto";
 import {serviceDb} from "./supabase";
 import {inWindow} from "./domain";
-export function validSignature(raw:string,signature:string|null,secret:string){if(!signature||!secret)return false;const expected="sha256="+createHmac("sha256",secret).update(raw).digest("hex");const a=Buffer.from(expected),b=Buffer.from(signature);return a.length===b.length&&timingSafeEqual(a,b)}
+export function validSignature(raw:string|Uint8Array,signature:string|null,secret:string){if(!signature||!secret||!/^sha256=[a-f0-9]{64}$/.test(signature))return false;const expected="sha256="+createHmac("sha256",secret).update(raw).digest("hex");const a=Buffer.from(expected),b=Buffer.from(signature);return a.length===b.length&&timingSafeEqual(a,b)}
 export async function sendMessage(db:ReturnType<typeof serviceDb>,conversation:any,input:any,key:string){
  if(process.env.WHATSAPP_POLICY_VERIFIED!=="true")throw new Error("Review current Meta policy and complete WhatsApp setup before sending");
  const c=conversation.data;if(c.opt_out||!c.consent)throw new Error("Recorded recipient consent is required");

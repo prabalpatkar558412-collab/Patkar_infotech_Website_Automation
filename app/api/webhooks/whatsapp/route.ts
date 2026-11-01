@@ -1,4 +1,10 @@
-import {validSignature} from "@/lib/messaging";
+import {createWebhookHandlers} from "@/lib/whatsapp-webhook";
 import {serviceDb} from "@/lib/supabase";
-export async function GET(req:Request){const p=new URL(req.url).searchParams;return p.get("hub.mode")==="subscribe"&&!!process.env.WHATSAPP_VERIFY_TOKEN&&p.get("hub.verify_token")===process.env.WHATSAPP_VERIFY_TOKEN?new Response(p.get("hub.challenge")):new Response("Forbidden",{status:403})}
-export async function POST(req:Request){const raw=await req.text();if(!validSignature(raw,req.headers.get("x-hub-signature-256"),process.env.WHATSAPP_APP_SECRET||""))return new Response("Invalid signature",{status:401});try{const payload=JSON.parse(raw);const db=serviceDb();for(const entry of payload.entry||[])for(const change of entry.changes||[]){const v=change.value;if(v.metadata?.phone_number_id!==process.env.WHATSAPP_PHONE_NUMBER_ID)continue;for(const message of v.messages||[]){const {error}=await db.rpc("ingest_whatsapp",{event_key:message.id,event:{message,name:v.contacts?.[0]?.profile?.name}});if(error)throw error}for(const status of v.statuses||[]){const {error}=await db.rpc("ingest_whatsapp",{event_key:`${status.id}:${status.status}`,event:{status}});if(error)throw error}}return Response.json({received:true})}catch{return new Response("Webhook processing failed; retry",{status:500})}}
+export const runtime = "nodejs";
+// Public Meta endpoint, authenticated by token or signed body, without application login.
+const handlers = createWebhookHandlers(() => process.env, async (event_key, event) => {
+  const {data, error} = await serviceDb().rpc("ingest_whatsapp", {event_key, event});
+  if (error || typeof data !== "boolean") throw new Error("Webhook persistence failed");
+});
+export const GET = handlers.GET;
+export const POST = handlers.POST;

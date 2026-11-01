@@ -15,6 +15,11 @@ begin
  perform public.ingest_whatsapp('integration-reply-unique',jsonb_build_object('message',jsonb_build_object('id','integration-reply-unique','from','919000000001','timestamp',extract(epoch from now())::bigint::text,'type','text','text',jsonb_build_object('body','STOP'))));
  if (select status from public.jobs where id=jid)<>'cancelled' then raise exception 'Reply did not cancel scheduled automation';end if;
  if (select data->>'opt_out' from public.records where id=cid)<>'true' then raise exception 'Opt-out not persisted';end if;
+ perform public.ingest_whatsapp('integration-second-message',jsonb_build_object('message',jsonb_build_object('id','integration-second-message','from','919000000001','timestamp',extract(epoch from now())::bigint::text,'type','text','text',jsonb_build_object('body','Second enquiry'))));
+ select count(*) into n from public.records where kind='conversations' and data->>'phone'='919000000001';
+ if n<>1 then raise exception 'Duplicate conversation created';end if;
+ select count(*) into n from public.records where kind='leads' and data->>'phone'='919000000001';
+ if n<>1 then raise exception 'Duplicate lead created';end if;
  raise notice 'PASS: actual webhook deduplication, reply cancellation and opt-out';
 end$$;
 rollback;

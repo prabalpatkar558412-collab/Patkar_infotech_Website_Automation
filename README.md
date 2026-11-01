@@ -21,7 +21,7 @@ npm run build
 
 ## Connect Supabase
 
-1. Create a Supabase project. Run `supabase/migrations/001_workspace.sql` and `002_scheduling_and_history.sql`, in order, in its SQL editor. These create records, roles, references, indexes, RLS, quotation version history, audit logging, webhook event deduplication, a durable queue and a private file bucket.
+1. Create a Supabase project. Run `supabase/migrations/001_workspace.sql` and `002_scheduling_and_history.sql` and `003_webhook_hardening.sql`, in order, in its SQL editor. These create records, roles, references, indexes, RLS, quotation version history, audit logging, webhook event deduplication, a durable queue and a private file bucket.
 2. Copy `.env.example` to `.env.local`. Fill in the project URL, anon key and server service-role key. Only variables prefixed `NEXT_PUBLIC_` enter the browser bundle. Never expose the service-role or Meta credentials.
 3. Create your first user from Supabase Authentication, then run this in the SQL editor, using that user's actual UUID:
 
@@ -38,12 +38,14 @@ Sales can read/write their assigned leads, clients, conversations, notes and dra
 
 The `records` table is a typed entity store with JSONB fields, indexed type/owner columns, and actual foreign keys for lead and project relationships. This keeps the reusable CRUD API small while preserving row-level access, financial checks and links. Messages, queue jobs, webhook events, audit logs, and quotation versions have separate tables. Payment writes lock the parent project and reject overpayments. Approved quotations are versioned on every edit; Sales cannot alter an approved quotation.
 
+See [WHATSAPP_SETUP.md](WHATSAPP_SETUP.md) for the production callback, environment-variable checklist, migration and connection steps.
+
 ## Official WhatsApp Cloud API
 
 This application uses only Meta's Graph API. There is no browser automation or unofficial WhatsApp client.
 
 1. Create a Meta business app, add WhatsApp, verify your business, and register the sending number. Obtain a system-user access token with appropriate WhatsApp permissions.
-2. Set `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, and the currently supported `WHATSAPP_API_VERSION` (including its `v` prefix) on the server. No version is assumed.
+2. Set `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `META_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, and the currently supported `WHATSAPP_API_VERSION` (including its `v` prefix) on the server. No version is assumed.
 3. Expose the app through HTTPS. Set the webhook callback to `https://YOUR-DOMAIN/api/webhooks/whatsapp`. Set the same verification token, subscribe the WhatsApp business account and app to the messages field, and test verification.
 4. Incoming requests require a valid HMAC-SHA256 signature over the exact raw bytes, and a matching phone number ID. Message and status events are ingested transactionally through a service-role-only RPC. Both the event key and Meta message ID are unique. A processing failure returns HTTP 500 so Meta can retry.
 5. Create templates in WhatsApp Manager. Record the exact approved name, language and body in Settings. Only Admin can mark a local template approved. **This release supports live templates without parameters**; do not register parameterized templates locally. Local editing does not submit a new version to Meta. Meta remains the authority on approval and may reject a send.
