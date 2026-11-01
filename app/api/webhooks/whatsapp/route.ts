@@ -1,5 +1,5 @@
 import {createWebhookHandlers} from "@/lib/whatsapp-webhook";
-import {serviceDb} from "@/lib/supabase";
+import {serviceDb} from "@/lib/supabase-server";
 export const runtime = "nodejs";
 // Public Meta endpoint, authenticated by token or signed body, without application login.
 const handlers = createWebhookHandlers(() => process.env, async (event_key, event) => {

@@ -1,8 +1,16 @@
-import {auth,apiError} from "@/lib/supabase";
+import {auth,apiError} from "@/lib/workspace-auth";
 import {schemas,kinds,Kind,canAccess} from "@/lib/domain";
-export async function GET(req:Request){try{const {db}=await auth(req);const [{data,error},{data:team}]=await Promise.all([db.from("records").select("*").order("created_at",{ascending:false}),db.from("profiles").select("id,name,role")]);if(error)throw error;return Response.json({records:data,team});}catch(e){return apiError(e)}}
+export async function GET(req:Request){try{
+ const {db,profile}=await auth(req);const records=[];
+ // Page through PostgREST's row limit so totals include every permitted record.
+ for(let offset=0;;offset+=500){const {data,error}=await db.from("records").select("*").order("created_at",{ascending:false}).order("id").range(offset,offset+499);if(error)throw error;records.push(...data);if(data.length<500)break;}
+ const {data:team,error}=await db.from("profiles").select("id,name,role");if(error)throw error;
+ return Response.json({records,team,profile},{headers:{"Cache-Control":"no-store"}});
+ }catch(e){return apiError(e)}}
 export async function POST(req:Request){try{
  const {db,user,profile}=await auth(req);const body=await req.json();const kind=body.kind as Kind;
+ if(body.action && !["convert","delete"].includes(body.action))throw new Error("Invalid action");
+ if(body.action==="delete"&&!body.id)throw new Error("Record ID required");
  if(!kinds.includes(kind))throw new Error("Invalid record type");
  if(body.action==="convert"){const {data,error}=await db.rpc("convert_lead",{lead:body.id});if(error)throw error;return Response.json(data)}
  let old:any=null;if(body.id){const {data,error}=await db.from("records").select("*").eq("id",body.id).single();if(error)throw error;old=data;if(old.kind!==kind)throw new Error("Invalid record type")}

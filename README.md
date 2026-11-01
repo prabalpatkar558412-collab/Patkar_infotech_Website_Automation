@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. With no Supabase variables, the app opens in **Demo workspace**. Sample records and messages persist in this browser's localStorage. Demo schedules do not run in the background. Nothing in demo mode calls WhatsApp. Reset sample data from Settings.
+Open http://localhost:3000. Live mode requires Supabase configuration and shows a setup error when variables are absent. Set `NEXT_PUBLIC_DEMO_MODE=true` explicitly to open **Demo workspace**. Sample records and messages persist in this browser's localStorage. Demo schedules do not run in the background. Nothing in demo mode calls WhatsApp. Reset sample data from Settings.
 
 ```powershell
 npm test
@@ -19,9 +19,11 @@ npm run typecheck
 npm run build
 ```
 
+See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for secure local configuration, pending migrations, verification SQL, and exact Vercel redeployment steps.
+
 ## Connect Supabase
 
-1. Create a Supabase project. Run `supabase/migrations/001_workspace.sql` and `002_scheduling_and_history.sql` and `003_webhook_hardening.sql`, in order, in its SQL editor. These create records, roles, references, indexes, RLS, quotation version history, audit logging, webhook event deduplication, a durable queue and a private file bucket.
+1. Create a Supabase project. Run `supabase/migrations/001_workspace.sql` and `002_scheduling_and_history.sql` and `003_webhook_hardening.sql` and `004_integration_permissions.sql`, in order, in its SQL editor. These create records, roles, references, indexes, RLS, quotation version history, audit logging, webhook event deduplication, a durable queue and a private file bucket.
 2. Copy `.env.example` to `.env.local`. Fill in the project URL, anon key and server service-role key. Only variables prefixed `NEXT_PUBLIC_` enter the browser bundle. Never expose the service-role or Meta credentials.
 3. Create your first user from Supabase Authentication, then run this in the SQL editor, using that user's actual UUID:
 

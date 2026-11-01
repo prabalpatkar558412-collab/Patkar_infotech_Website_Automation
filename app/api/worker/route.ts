@@ -1,5 +1,5 @@
 import {timingSafeEqual} from "node:crypto";
-import {serviceDb} from "@/lib/supabase";
+import {serviceDb} from "@/lib/supabase-server";
 import {shouldCancel,quietNow} from "@/lib/domain";
 import {sendMessage} from "@/lib/messaging";
 export const maxDuration=60;

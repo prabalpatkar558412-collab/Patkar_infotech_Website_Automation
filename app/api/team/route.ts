@@ -1,2 +1,2 @@
-import {auth,apiError} from "@/lib/supabase";
+import {auth,apiError} from "@/lib/workspace-auth";
 export async function POST(req:Request){try{const {db,user,profile}=await auth(req);if(profile.role!=="Admin")throw new Error("Admin permission required");const {id,role,name}=await req.json();if(!["Admin","Sales","Developer"].includes(role)||!name?.trim())throw new Error("Valid role and name required");if(id===user.id&&role!=="Admin")throw new Error("Ask another Admin to change your own role");const {error}=await db.from("profiles").upsert({id,role,name});if(error)throw error;return Response.json({ok:true})}catch(e){return apiError(e)}}
